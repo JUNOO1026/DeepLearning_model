@@ -37,6 +37,11 @@ class VGGNet(nn.Module):
                     nn.init.normal_(m.weight, 0, 0.01)
                     nn.init.constant_(m.bias, 0)
 
+        # 예를들어 분산이 1인 random variable이 들어간다고 하면 각 weight가 곱해지고 더해지면 출력 노드의 variance(변화)는 커지게 됨. 이러면 학습에 도움을 주지 않음.
+        # 이러한 문제를 막기 위해 Back Propagation에서의 분산을 1/N_out 으로 나눠주고 그 nonlinearity는 relu로 학습할 수 있도록 한다.
+
+
+
     def forward(self, x):
         x = self.feature(x)
         x = self.adpavgpool(x)
@@ -69,3 +74,6 @@ class VGGNet(nn.Module):
 
 model = VGGNet(cfgs["D"], batch_norm=False)
 summary(model, input_size=(2, 3, 224, 224), device='cuda')
+
+
+
