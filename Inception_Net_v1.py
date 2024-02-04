@@ -62,3 +62,13 @@ class InceptionAux(nn.Module):
         x = self.dropout(x)
         x = self.fc2(x)
         return x
+
+class InceptionNetV1(nn.Module):
+    def __init__(self, num_classes=1000, use_aux=True, init_weights=None, drop_p=0.4, drop_p_aux=0.7):
+        super().__init__()
+
+        self.use_aux = use_aux
+
+        self.conv1 = BasicConvBlock(3, 64, kernel_size=7, stride=2, padding=3)
+        self.maxpool = nn.MaxPool2d(3, stride=2, padding=1)
+        self.conv2 =
