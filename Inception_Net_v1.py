@@ -18,19 +18,19 @@ class BasicConvBlock(nn.Module):
 
 
 class InceptionNet(nn.Module):
-    def __init__(self, in_channels, ch1x1, ch3x3re, ch3x3, ch5x5re, ch5x5, poolproj):
+    def __init__(self, in_channels, ch1x1, ch3x3re, ch3x3, ch5x5re, ch5x5, pool_proj):
         super().__init__()
 
-        self.branch1 = BasicConvBlock(in_channels, ch1x1, kernel_size=1, stride=1, padding=1)
+        self.branch1 = BasicConvBlock(in_channels, ch1x1, kernel_size=1)
 
-        self.branch2 = nn.Sequential(BasicConvBlock(in_channels, ch3x3re, kernel_size=1, stride=1, padding=1),
-                                     BasicConvBlock(ch3x3re, ch3x3, kernel_size=3, stride=1, padding=1))
+        self.branch2 = nn.Sequential(BasicConvBlock(in_channels, ch3x3re, kernel_size=1),
+                                     BasicConvBlock(ch3x3re, ch3x3, kernel_size=3, padding=1))
 
-        self.branch3 = nn.Sequential(BasicConvBlock(in_channels, ch5x5re, kernel_size=1, stride=1, padding=1),
-                                     BasicConvBlock(ch5x5re, ch5x5, kernel_size=5, stride=1, padding=1))
+        self.branch3 = nn.Sequential(BasicConvBlock(in_channels, ch5x5re, kernel_size=1),
+                                     BasicConvBlock(ch5x5re, ch5x5, kernel_size=5, padding=2))
 
-        self.branch4 = nn.Sequential(nn.MaxPool2d(3, stride=1, padding=1),
-                                    BasicConvBlock(in_channels, poolproj, kernel_size=1, stride=1, padding=1))
+        self.branch4 = nn.Sequential(nn.MaxPool2d(kernel_size=3, stride=1, padding=1),
+                                     BasicConvBlock(in_channels, pool_proj, kernel_size=1))
 
     def forward(self, x):
         branch1 = self.branch1(x)
@@ -40,15 +40,15 @@ class InceptionNet(nn.Module):
 
         output = [branch1, branch2, branch3, branch4]
 
-        return torch.cat(output, dim=1)
+        return torch.cat(output, 1)
 
 
 class InceptionAux(nn.Module):
-    def __init__(self, in_channels, num_classes, bais=False, drop_p=0.7, **kwargs):
+    def __init__(self, in_channels, num_classes, bias=False, drop_p=0.7, **kwargs):
         super().__init__()
 
-        self.avgpool = nn.AvgPool2d(5, stride=3, padding=0)
-        self.conv = BasicConvBlock(in_channels, 128, kernel_size=1, padding=1)
+        self.avgpool = nn.AvgPool2d(kernel_size=5, stride=3)
+        self.conv = BasicConvBlock(in_channels, 128, kernel_size=1)
         self.fc1 = nn.Linear(2048, 1024)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(p=drop_p)
@@ -72,8 +72,8 @@ class InceptionNetV1(nn.Module):
 
         self.conv1 = BasicConvBlock(3, 64, kernel_size=7, stride=2, padding=3)
         self.maxpool1 = nn.MaxPool2d(3, stride=2, padding=1)
-        self.conv2 = BasicConvBlock(64, 64, kernel_size=1, stride=2)
-        self.conv3 = BasicConvBlock(64, 192, kernel_size=3, stride=1, padding=1)
+        self.conv2 = BasicConvBlock(64, 64, kernel_size=1)
+        self.conv3 = BasicConvBlock(64, 192, kernel_size=3, padding=1)
         self.maxpool2 = nn.MaxPool2d(3, stride=2, padding=1)
         self.inception3a = InceptionNet(192, 64, 96, 128, 16, 32, 32)
         self.inception3b = InceptionNet(256, 128, 128, 192, 32, 96, 64)
@@ -85,7 +85,7 @@ class InceptionNetV1(nn.Module):
         self.inception4e = InceptionNet(528, 256, 160, 320, 32, 128, 128)
         self.maxpool4 = nn.MaxPool2d(3, stride=2, padding=1)
         self.inception5a = InceptionNet(832, 256, 160, 320, 32, 128, 128)
-        self.inception5b = InceptionNet(832, 384, 192, 382, 48, 128, 128)
+        self.inception5b = InceptionNet(832, 384, 192, 384, 48, 128, 128)
         if use_aux:
             self.inceptionAux1 = InceptionAux(512, num_classes)
             self.inceptionAux2 = InceptionAux(528, num_classes)
@@ -94,10 +94,10 @@ class InceptionNetV1(nn.Module):
             self.inceptionAux2 = None
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.dropout = nn.Dropout(p=drop_p)
-        self.linear = nn.Linear(1024, num_classes*1*1)
+        self.fc = nn.Linear(1024, num_classes)
 
         if init_weights:
-            for m in self.modules:
+            for m in self.modules():
                 if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
                     nn.init.trunc_normal_(m.weight, mean=0, std=0.01, a=-2, b=2)
                 elif isinstance(m, nn.BatchNorm2d):
@@ -115,25 +115,25 @@ class InceptionNetV1(nn.Module):
         x = self.maxpool3(x)
         x = self.inception4a(x)
         if self.inceptionAux1 is not None and self.training:
-            inceptionAux1 = self.inceptionAux1(x)
+            inceptionaux1 = self.inceptionAux1(x)
         else:
-            inceptionAux1 = None
+            inceptionaux1 = None
         x = self.inception4b(x)
         x = self.inception4c(x)
         x = self.inception4d(x)
         if self.inceptionAux2 is not None and self.training:
-            inceptionAux2 = self.inceptionAux2(x)
+            inceptionaux2 = self.inceptionAux2(x)
         else:
-            inceptionAux2 = None
+            inceptionaux2 = None
         x = self.inception4e(x)
         x = self.maxpool4(x)
         x = self.inception5a(x)
         x = self.inception5b(x)
         x = self.avgpool(x)
-        x = torch.flatten(x, dims=1)
+        x = torch.flatten(x, 1)
         x = self.dropout(x)
-        x = self.linear(x)
-        return x, inceptionAux1, inceptionAux2
+        x = self.fc(x)
+        return x, inceptionaux1, inceptionaux2
 
 
 model = InceptionNetV1()
