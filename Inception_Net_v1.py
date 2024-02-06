@@ -86,6 +86,7 @@ class InceptionNetV1(nn.Module):
         self.maxpool4 = nn.MaxPool2d(3, stride=2, padding=1)
         self.inception5a = InceptionNet(832, 256, 160, 320, 32, 128, 128)
         self.inception5b = InceptionNet(832, 384, 192, 384, 48, 128, 128)
+        # 채널 값 수정 (torchinfo summary channel error 해결)
         if use_aux:
             self.inceptionAux1 = InceptionAux(512, num_classes)
             self.inceptionAux2 = InceptionAux(528, num_classes)
