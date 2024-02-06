@@ -137,3 +137,9 @@ summary(model, input_size=(2, 3, 224, 224), device='cuda')
 # 일반적으로 nn.ReLU()에서 nn.ReLU(inplace=True)를 사용해서 메모리 효율성을 높여주는 것이긴한데, 이런 느낌은? 좋지 않음.
 # 쉽게 설명하면 어떤 메모리에 input data를 삭제하고 output을 집어넣어서 메모리의 효율성을 높여주는 방식임. 그러나 그리 좋은 건 아닌듯
 # backpropagation을 통해 weight를 업데이트하는데 문제가 충분히 발생할 수 있다고 함.
+
+# 따라서 메모리의 효율성을 따지려면 모델 네트워크의 파라미터를 줄이면서 성능은 비슷한 최적화가 중요함.
+# 예를 들어, 기본적인 ResNet의 경우 skip connection을 통해 많은 성과를 이루었음.
+# ResNext는 이러한 ResNet의 기본적인 방법은 따라가나 depth, width를 늘리는 방식이 아닌 들어오는 채널을 그룹화하여 학습하는 방식으로
+# 모델의 성능을 끌어올림.
+
