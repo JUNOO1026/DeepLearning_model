@@ -110,4 +110,9 @@ model = densenet264()
 
 
 from torchinfo import summary
-summary(model, input_size=(2,3,224,224), device='cuda')
+summary(model, input_size=(2, 3, 224, 224), device='cuda')
+
+# DenseNet의 특징은 full pre-activation을 사용하며 그 모델들에 ResNet의 skip connection 개념을 도입함.
+
+# full pre-activation은 일반적으로 Conv -> BatchNoraml -> ReLU 순으로 진행하지만 BatchNormal -> ReLU -> Conv 순으로 진행하는 것을 의미함.
+
