@@ -12,7 +12,7 @@ class BottleNeck(nn.Module):
                                       nn.Conv2d(in_channels, 4 * k, kernel_size=1, bias=False),
                                       nn.BatchNorm2d(4 * k),
                                       nn.ReLU(),
-                                      nn.Conv2d(4 * k, k, kernel_size=3, stride=1, padding=1))
+                                      nn.Conv2d(4 * k, k, kernel_size=3, stride=1, padding=1, bias=False))
         # Desnet은 layer을 지나면서 해당 feature size를 줄이 않음. 따라서 kernel_size가 3이면 padding 1을 주어야 함.
 
     def forward(self, x):
